@@ -12,8 +12,10 @@ import {
   Query,
   Delete,
   UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { IsOwnerGuard } from 'src/auth/guards/owner.guard';
 import { UserService } from './user.service';
 
 @Controller('/api')
@@ -32,6 +34,19 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('user/info')
+  async getUserInfo(@Res() res, @Req() req) {
+    try {
+      const userId = req.user._id;
+      const userInfo = await this.userService.getUserInfo(userId);
+      return res.status(HttpStatus.OK).json(userInfo);
+    } catch (error) {
+      console.log(error);
+      throw new UnauthorizedException();
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, IsOwnerGuard)
   @Get('user/:userId')
   async getUserById(@Res() res, @Req() req, @Param('userId') userId) {
     try {

@@ -1,4 +1,10 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import RegisterDto from 'src/auth/dto/register.dto';
@@ -14,6 +20,22 @@ export class UserService {
       .select('name email updated created');
 
     return users;
+  }
+
+  async getUserInfo(userId): Promise<IUser> {
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+
+    const user = await this.userModal
+      .findById(userId)
+      .select('name email updated created followers following');
+
+    if (!user) {
+      throw new NotFoundException('Not found');
+    }
+
+    return user;
   }
 
   async getById(userId: string): Promise<IUser> {
@@ -44,8 +66,8 @@ export class UserService {
 
       return user;
     } catch (error) {
-      //   console.log(error);
-      //   throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      console.log(error);
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }
