@@ -3,19 +3,18 @@ import {
   Get,
   Res,
   HttpStatus,
-  Param,
   NotFoundException,
-  Post,
   Req,
-  Body,
   Put,
-  Query,
   Delete,
+  Body,
   UseGuards,
   UnauthorizedException,
+  HttpException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { IsOwnerGuard } from 'src/auth/guards/owner.guard';
+import UpdateUserDto from './dto/update-user.dto';
 import { UserService } from './user.service';
 
 @Controller('/api')
@@ -46,15 +45,39 @@ export class UserController {
     }
   }
 
-  @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('user/:userId')
-  async getUserById(@Res() res, @Req() req, @Param('userId') userId) {
+  async getUserById(@Res() res, @Req() req) {
     try {
-      const user = await this.userService.getById(userId);
+      const user = req.profile;
 
       return res.status(HttpStatus.OK).json(user);
     } catch (error) {
       throw new NotFoundException('Not found');
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  @Put('user/:userId')
+  async updateUser(@Res() res, @Req() req, @Body() formData: UpdateUserDto) {
+    try {
+      const user = req.profile;
+      const updatedUser = await this.userService.updateUser(user, formData);
+      return res.status(HttpStatus.OK).json(updatedUser);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  @Delete('user/:userId')
+  async removeUser(@Res() res, @Req() req) {
+    try {
+      const user = req.profile;
+      const removedUser = await this.userService.removeUser(user);
+      return res.status(HttpStatus.OK).json(removedUser);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }

@@ -19,6 +19,6 @@ export class IsOwnerGuard implements CanActivate {
       return true;
     }
 
-    // throw new HttpException('Unauthorized access', HttpStatus.UNAUTHORIZED);
+    throw new HttpException('Unauthorized access', HttpStatus.UNAUTHORIZED);
   }
 }
